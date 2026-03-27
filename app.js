@@ -7,7 +7,7 @@ db.version(1).stores({
 let activeAgentId = null;
 let masterKey = null;
 
-// --- CRYPTO ENGINE ---
+// --- CRYPTO ---
 async function initCrypto() {
     let keyData = localStorage.getItem('device_master_key');
     if (!keyData) {
@@ -27,114 +27,114 @@ async function encryptData(text) {
 }
 
 async function decryptData(encryptedObj) {
-    if (!encryptedObj || !encryptedObj.iv || !encryptedObj.cipher) return null;
-    try {
-        const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(encryptedObj.iv) }, masterKey, new Uint8Array(encryptedObj.cipher));
-        return new TextDecoder().decode(decrypted);
-    } catch(e) { return null; }
+    if (!encryptedObj || !encryptedObj.iv) return null;
+    const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(encryptedObj.iv) }, masterKey, new Uint8Array(encryptedObj.cipher));
+    return new TextDecoder().decode(decrypted);
 }
 
-// --- UI LOGIC ---
+// --- APP INIT ---
 document.addEventListener('DOMContentLoaded', async () => {
     await initCrypto();
     await renderNodeList();
 });
 
-const formAddNode = document.getElementById('formAddNode');
-const nodeList = document.getElementById('nodeList');
+// --- NAVIGATION ---
+function showView(viewId) {
+    document.getElementById('viewMain').classList.add('hidden');
+    document.getElementById('viewChat').classList.add('hidden');
+    document.getElementById(viewId).classList.remove('hidden');
+}
 
+document.getElementById('btnBack').onclick = () => showView('viewMain');
+
+// --- NODE MANAGEMENT ---
 document.getElementById('fabAddNode').onclick = () => {
-    formAddNode.reset();
-    formAddNode.dataset.editId = "";
+    document.getElementById('formAddNode').reset();
+    document.getElementById('formAddNode').dataset.editId = "";
     document.getElementById('modalAddNode').classList.remove('hidden');
 };
 
 document.getElementById('btnCancelNode').onclick = () => document.getElementById('modalAddNode').classList.add('hidden');
 
-formAddNode.onsubmit = async (e) => {
+document.getElementById('formAddNode').onsubmit = async (e) => {
     e.preventDefault();
-    const id = formAddNode.dataset.editId || crypto.randomUUID();
-    const name = document.getElementById('nodeName').value.trim();
-    const baseUrl = document.getElementById('nodeBaseUrl').value.trim().replace(/\/+$/, "");
-    const model = document.getElementById('nodeModel').value.trim();
-    const apiKeyRaw = document.getElementById('nodeApiKey').value.trim();
+    const f = e.target;
+    const id = f.dataset.editId || crypto.randomUUID();
+    const nodeData = {
+        id,
+        name: document.getElementById('nodeName').value,
+        baseUrl: document.getElementById('nodeBaseUrl').value.replace(/\/+$/, ""),
+        model: document.getElementById('nodeModel').value,
+        updatedAt: new Date().toISOString()
+    };
+    
+    const key = document.getElementById('nodeApiKey').value;
+    if (key) nodeData.encryptedKey = await encryptData(key);
+    else if (!f.dataset.editId) return alert("Key required for new agents");
 
-    let nodeData = { id, name, baseUrl, model, updatedAt: new Date().toISOString() };
-    if (apiKeyRaw) nodeData.encryptedKey = await encryptData(apiKeyRaw);
-
-    if (formAddNode.dataset.editId) {
-        await db.nodes.update(id, nodeData);
-    } else {
-        if (!apiKeyRaw) return alert("API Key required for new agents.");
-        await db.nodes.add(nodeData);
-    }
-
+    await db.nodes.put(nodeData);
     document.getElementById('modalAddNode').classList.add('hidden');
     renderNodeList();
 };
 
 async function renderNodeList() {
-    nodeList.innerHTML = '';
+    const list = document.getElementById('nodeList');
+    list.innerHTML = '';
     const nodes = await db.nodes.orderBy('updatedAt').reverse().toArray();
     nodes.forEach(node => {
         const li = document.createElement('li');
         li.className = 'node-item';
         li.innerHTML = `
-            <div class="node-icon">${node.name.charAt(0)}</div>
+            <div class="node-icon">${node.name[0]}</div>
             <div class="node-info">
                 <div class="node-name">${node.name}</div>
-                <div class="node-preview">${node.model} • ${new URL(node.baseUrl).hostname}</div>
+                <div class="node-preview">${node.model}</div>
             </div>
         `;
         li.onclick = (e) => {
-            if(e.target.closest('.node-icon')) {
-                formAddNode.dataset.editId = node.id;
+            if (e.target.closest('.node-icon')) {
+                // Edit mode
+                const f = document.getElementById('formAddNode');
+                f.dataset.editId = node.id;
                 document.getElementById('nodeName').value = node.name;
                 document.getElementById('nodeBaseUrl').value = node.baseUrl;
                 document.getElementById('nodeModel').value = node.model;
-                document.getElementById('nodeApiKey').value = ""; 
                 document.getElementById('modalAddNode').classList.remove('hidden');
             } else {
                 openChat(node);
             }
         };
-        nodeList.appendChild(li);
+        list.appendChild(li);
     });
 }
 
-// --- CHAT ENGINE ---
+// --- CHAT LOGIC ---
 async function openChat(node) {
     activeAgentId = node.id;
     document.getElementById('chatHeaderTitle').textContent = node.name;
-    document.getElementById('viewMain').classList.replace('view-active', 'view-hidden');
-    document.getElementById('viewChat').classList.replace('view-hidden', 'view-active');
-    await loadHistory();
+    showView('viewChat');
+    await loadMessages();
 }
 
-document.getElementById('btnBack').onclick = () => {
-    document.getElementById('viewChat').classList.replace('view-active', 'view-hidden');
-    document.getElementById('viewMain').classList.replace('view-hidden', 'view-active');
-};
-
-async function loadHistory() {
+async function loadMessages() {
     const list = document.getElementById('messageList');
     list.innerHTML = '';
-    const history = await db.chats.where('agentId').equals(activeAgentId).sortBy('timestamp');
-    history.forEach(m => renderBubble(m.content, m.role));
-    scrollDown();
+    const msgs = await db.chats.where('agentId').equals(activeAgentId).sortBy('timestamp');
+    msgs.forEach(m => renderBubble(m.content, m.role));
+    scrollChat();
 }
 
 function renderBubble(text, role) {
     const div = document.createElement('div');
-    div.className = `msg-bubble ${role === 'user' ? 'msg-user' : 'msg-ai'}`;
+    div.className = `msg-bubble msg-${role}`;
     div.textContent = text;
     document.getElementById('messageList').appendChild(div);
     return div;
 }
 
-function scrollDown() {
-    const c = document.getElementById('chatContainer');
-    c.scrollTop = c.scrollHeight;
+function scrollChat() {
+    const container = document.getElementById('chatContainer');
+    container.scrollTop = container.scrollHeight;
 }
 
 document.getElementById('btnSend').onclick = async () => {
@@ -144,7 +144,7 @@ document.getElementById('btnSend').onclick = async () => {
 
     input.value = '';
     renderBubble(text, 'user');
-    scrollDown();
+    scrollChat();
 
     const agent = await db.nodes.get(activeAgentId);
     const apiKey = await decryptData(agent.encryptedKey);
@@ -154,7 +154,7 @@ document.getElementById('btnSend').onclick = async () => {
     await db.chats.add({id: crypto.randomUUID(), agentId: activeAgentId, role: 'user', content: text, timestamp: Date.now()});
 
     const aiBubble = renderBubble("...", 'ai');
-    let fullAiText = "";
+    let fullText = "";
 
     try {
         const res = await fetch(`${agent.baseUrl}/chat/completions`, {
@@ -170,18 +170,17 @@ document.getElementById('btnSend').onclick = async () => {
         while (true) {
             const {done, value} = await reader.read();
             if (done) break;
-            const chunk = decoder.decode(value);
-            chunk.split('\n').forEach(line => {
+            decoder.decode(value).split('\n').forEach(line => {
                 if (line.startsWith('data: ') && line !== 'data: [DONE]') {
                     try {
                         const content = JSON.parse(line.slice(6)).choices[0].delta.content || "";
-                        fullAiText += content;
-                        aiBubble.textContent = fullAiText;
-                        scrollDown();
-                    } catch(e){}
+                        fullText += content;
+                        aiBubble.textContent = fullText;
+                        scrollChat();
+                    } catch(e) {}
                 }
             });
         }
-        await db.chats.add({id: crypto.randomUUID(), agentId: activeAgentId, role: 'ai', content: fullAiText, timestamp: Date.now()});
+        await db.chats.add({id: crypto.randomUUID(), agentId: activeAgentId, role: 'ai', content: fullText, timestamp: Date.now()});
     } catch(e) { aiBubble.textContent = "Error: " + e.message; }
 };
