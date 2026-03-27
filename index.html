@@ -9,11 +9,11 @@
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
 </head>
 <body>
-    <div id="viewMain" class="view-active">
+    <div id="viewMain" class="view">
         <header class="app-header">
             <h1>VhatsAppening</h1>
             <div class="header-actions">
-                <span id="syncStatus">✅</span>
+                <span id="syncStatus">● Local Only</span>
             </div>
         </header>
 
@@ -24,17 +24,18 @@
         <button id="fabAddNode" class="fab">+</button>
     </div>
 
-    <div id="viewChat" class="view-hidden">
+    <div id="viewChat" class="view hidden">
         <header class="app-header">
             <button id="btnBack" class="icon-btn">←</button>
             <h1 id="chatHeaderTitle">Agent</h1>
             <div class="header-actions">
-                <span class="status-indicator">🟢 Fast</span>
+                <span class="status-indicator">🟢 FAST</span>
             </div>
         </header>
 
         <main id="chatContainer" class="chat-container">
-            <div id="messageList" class="message-list"></div>
+            <div id="messageList" class="message-list">
+                </div>
         </main>
 
         <footer class="chat-input-area">
@@ -49,21 +50,21 @@
             <form id="formAddNode">
                 <div class="form-group">
                     <label>Agent Name</label>
-                    <input type="text" id="nodeName" required placeholder="e.g., DeepSeek Helper">
+                    <input type="text" id="nodeName" required placeholder="My Assistant">
                 </div>
                 <div class="form-group">
                     <label>Base API URL</label>
                     <input type="url" id="nodeBaseUrl" required placeholder="https://api.openai.com/v1">
-                    <small class="hint">The endpoint used for /chat/completions</small>
+                    <small>For Mistral use: https://api.mistral.ai/v1</small>
                 </div>
                 <div class="form-group">
-                    <label>Model ID</label>
-                    <input type="text" id="nodeModel" required placeholder="e.g., gpt-4o or deepseek-chat">
+                    <label>Model ID / Agent ID</label>
+                    <input type="text" id="nodeModel" required placeholder="gpt-4o or ag:mistral-id">
                 </div>
                 <div class="form-group">
                     <label>API Key (Secret)</label>
-                    <input type="password" id="nodeApiKey" placeholder="Paste key to save/update">
-                    <small class="warning-text">Once saved, keys are encrypted and hidden.</small>
+                    <input type="password" id="nodeApiKey" placeholder="Paste to save/update">
+                    <small class="warning">Keys are encrypted and hidden once saved.</small>
                 </div>
                 <div class="modal-actions">
                     <button type="button" id="btnCancelNode" class="btn-secondary">Cancel</button>
