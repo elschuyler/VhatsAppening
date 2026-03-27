@@ -9,24 +9,44 @@
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
 </head>
 <body>
-    <header class="app-header">
-        <h1>VhatsAppening</h1>
-        <div class="header-actions">
-            <span id="syncStatus">✅</span>
-            <button id="btnSettings" class="icon-btn">⚙️</button>
-        </div>
-    </header>
+    <div id="viewMain" class="view-active">
+        <header class="app-header">
+            <h1>VhatsAppening</h1>
+            <div class="header-actions">
+                <span id="syncStatus">✅</span>
+                <button id="btnSettings" class="icon-btn">⚙️</button>
+            </div>
+        </header>
 
-    <main id="nodeListView" class="view-container">
-        <ul id="nodeList" class="node-list">
-            </ul>
-    </main>
+        <main class="view-container">
+            <ul id="nodeList" class="node-list"></ul>
+        </main>
 
-    <button id="fabAddNode" class="fab">+</button>
+        <button id="fabAddNode" class="fab">+</button>
+    </div>
+
+    <div id="viewChat" class="view-hidden">
+        <header class="app-header">
+            <button id="btnBack" class="icon-btn">←</button>
+            <h1 id="chatHeaderTitle">Agent Name</h1>
+            <div class="header-actions">
+                <span class="status-indicator" id="chatStatus">🟢 Fast</span>
+            </div>
+        </header>
+
+        <main id="chatContainer" class="chat-container">
+            <div id="messageList" class="message-list"></div>
+        </main>
+
+        <footer class="chat-input-area">
+            <textarea id="chatInput" placeholder="Message..." rows="1"></textarea>
+            <button id="btnSend" class="btn-send">➤</button>
+        </footer>
+    </div>
 
     <div id="modalAddNode" class="modal hidden">
         <div class="modal-content">
-            <h2>Add AI Agent</h2>
+            <h2>AI Agent Settings</h2>
             <form id="formAddNode">
                 <div class="form-group">
                     <label for="nodeName">Agent Name</label>
@@ -37,7 +57,6 @@
                     <select id="nodeProvider">
                         <option value="openai">OpenAI</option>
                         <option value="mistral">Mistral</option>
-                        <option value="claude">Anthropic Claude</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -46,8 +65,8 @@
                 </div>
                 <div class="form-group">
                     <label for="nodeApiKey">API Key</label>
-                    <input type="password" id="nodeApiKey" required placeholder="sk-...">
-                    <small class="warning-text">Stored locally in plaintext (No-PIN mode)</small>
+                    <input type="password" id="nodeApiKey" placeholder="sk-... (Leave blank to keep existing)">
+                    <small class="warning-text">Encrypted on device. Keys cannot be viewed once saved.</small>
                 </div>
                 <div class="modal-actions">
                     <button type="button" id="btnCancelNode" class="btn-secondary">Cancel</button>
@@ -58,15 +77,5 @@
     </div>
 
     <script src="app.js"></script>
-    <script>
-        // Register Service Worker for PWA installability
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('Service Worker registered', reg))
-                    .catch(err => console.error('Service Worker registration failed', err));
-            });
-        }
-    </script>
 </body>
-      </html>
+                    </html>
