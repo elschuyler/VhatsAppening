@@ -14,7 +14,6 @@
             <h1>VhatsAppening</h1>
             <div class="header-actions">
                 <span id="syncStatus">✅</span>
-                <button id="btnSettings" class="icon-btn">⚙️</button>
             </div>
         </header>
 
@@ -28,9 +27,9 @@
     <div id="viewChat" class="view-hidden">
         <header class="app-header">
             <button id="btnBack" class="icon-btn">←</button>
-            <h1 id="chatHeaderTitle">Agent Name</h1>
+            <h1 id="chatHeaderTitle">Agent</h1>
             <div class="header-actions">
-                <span class="status-indicator" id="chatStatus">🟢 Fast</span>
+                <span class="status-indicator">🟢 Fast</span>
             </div>
         </header>
 
@@ -46,27 +45,25 @@
 
     <div id="modalAddNode" class="modal hidden">
         <div class="modal-content">
-            <h2>AI Agent Settings</h2>
+            <h2>Agent Settings</h2>
             <form id="formAddNode">
                 <div class="form-group">
-                    <label for="nodeName">Agent Name</label>
-                    <input type="text" id="nodeName" required placeholder="e.g., Helpful Assistant">
+                    <label>Agent Name</label>
+                    <input type="text" id="nodeName" required placeholder="e.g., DeepSeek Helper">
                 </div>
                 <div class="form-group">
-                    <label for="nodeProvider">Provider</label>
-                    <select id="nodeProvider">
-                        <option value="openai">OpenAI</option>
-                        <option value="mistral">Mistral</option>
-                    </select>
+                    <label>Base API URL</label>
+                    <input type="url" id="nodeBaseUrl" required placeholder="https://api.openai.com/v1">
+                    <small class="hint">The endpoint used for /chat/completions</small>
                 </div>
                 <div class="form-group">
-                    <label for="nodeModel">Model</label>
-                    <input type="text" id="nodeModel" required placeholder="e.g., gpt-4o">
+                    <label>Model ID</label>
+                    <input type="text" id="nodeModel" required placeholder="e.g., gpt-4o or deepseek-chat">
                 </div>
                 <div class="form-group">
-                    <label for="nodeApiKey">API Key</label>
-                    <input type="password" id="nodeApiKey" placeholder="sk-... (Leave blank to keep existing)">
-                    <small class="warning-text">Encrypted on device. Keys cannot be viewed once saved.</small>
+                    <label>API Key (Secret)</label>
+                    <input type="password" id="nodeApiKey" placeholder="Paste key to save/update">
+                    <small class="warning-text">Once saved, keys are encrypted and hidden.</small>
                 </div>
                 <div class="modal-actions">
                     <button type="button" id="btnCancelNode" class="btn-secondary">Cancel</button>
@@ -78,4 +75,4 @@
 
     <script src="app.js"></script>
 </body>
-                                                          </html>
+    </html>
